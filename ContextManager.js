@@ -11,36 +11,27 @@ export class ContextManager {
     this.context = {};
     this.workingMemory = {};
   }
+  
 
   addObjects(objects) {
-    ////console.log("- Adding objects to context:", JSON.stringify(objects, null, 2));
+        ////console.log("- Adding objects to context:", JSON.stringify(objects, null, 2));
+
     objects.forEach((object) => {
       const key = Object.keys(object)[0];
-      //console.log(`- Object added under key: '${key}' with value:`, object[key]);
-
-      // Directly update the working memory with the object structure
       this.updateWorkingMemory(key, object[key]);
-
-      // add the object to the context
-      //console.log("Before adding to context:", JSON.stringify(this.context));
-    // Deep copy object to context
-    this.context[key] = JSON.parse(JSON.stringify(object[key]));
-      //console.log("After adding to context:", JSON.stringify(this.context));
-
-      if (key === "Template") {
-        Object.keys(object[key]).forEach((templateKey) => {
-          const templateValue = object[key][templateKey];
-          // Parse and add dependencies for templates
-          const dependentPaths = this.parser.parseDependentPaths(templateValue);
-          dependentPaths.forEach((dependentPath) => {
-            this.dependencyTracker.addDependency(dependentPath, `Template.${templateKey}`);
-          });
+      this.context[key] = JSON.parse(JSON.stringify(object[key])); // Deep copy
+  
+      Object.keys(object[key]).forEach((propertyKey) => {
+        const propertyValue = object[key][propertyKey];
+        const dependentPaths = this.parser.parseDependentPaths(propertyValue);
+        dependentPaths.forEach((dependentPath) => {
+          this.dependencyTracker.addDependency(dependentPath, `${key}.${propertyKey}`);
         });
-      }
+      });
     });
-    // Immediately re-evaluate dependencies after all objects have been added
     this.reEvaluateDependencies();
   }
+
 
   setValue(path, value) {
     //console.log(`- Setting value for ${path} to`, value);
@@ -66,7 +57,6 @@ export class ContextManager {
 
     // Update the value at the final part of the path
     target[pathParts[pathParts.length - 1]] = value;
-    // this.reEvaluateDependencies();
     //console.log(`updateWorkingMemory: Updated '${path}' with value: ${JSON.stringify(value)}`);
   }
 
@@ -121,24 +111,13 @@ export class ContextManager {
     //console.log("END WM = ", JSON.stringify(this.workingMemory, null, 2));
   }
 
+
   reEvaluateDependencies() {
-    //console.log("START reEvaluate all dependencies...");
-    // Log the context before re-evaluating dependencies
-    //console.log("Context before re-evaluating dependencies:", JSON.stringify(this.context, null, 2));
-
-    // Iterate over all keys in workingMemory that are templates and re-evaluate them
     let namesOfObjectsInWM = Object.keys(this.workingMemory);
-    //console.log("Names Of Objects In the working memory = ", namesOfObjectsInWM);
-
     namesOfObjectsInWM.forEach((key) => {
-      if (key === "Template") {
-        // Adjusted from startsWith to equality check
-        Object.entries(this.workingMemory[key]).forEach(([templateKey, templateValue]) => {
-          //console.log("Before reEvaluateExpression:", JSON.stringify(this.context));
-          this.reEvaluateExpression(`${key}.${templateKey}`, templateValue);
-          //console.log("After reEvaluateExpression:", JSON.stringify(this.context));
-        });
-      }
+      Object.entries(this.workingMemory[key]).forEach(([propertyKey, propertyValue]) => {
+        this.reEvaluateExpression(`${key}.${propertyKey}`, propertyValue);
+      });
     });
   }
 }

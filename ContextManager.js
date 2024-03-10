@@ -10,6 +10,7 @@ export class ContextManager {
     this.dependencyTracker = new DependencyTracker(this);
     this.context = {};
     this.workingMemory = {};
+<<<<<<< HEAD
   }
   
 
@@ -21,6 +22,42 @@ export class ContextManager {
       this.updateWorkingMemory(key, object[key]);
       this.context[key] = JSON.parse(JSON.stringify(object[key])); // Deep copy
   
+=======
+    /* map IDs to object references. This map helps quickly locate objects by their ID. */
+    this.idToRefMap = {};
+  }
+
+
+  addObjects(objects) {
+    //console.log("- Adding objects to context:", JSON.stringify(objects, null, 2));
+
+    objects.forEach((object) => {
+      const keys = Object.keys(object);
+      const type = keys[0]; // type = Person when passed object {Person: {…}}
+      const obj = object[key];
+      console.log("for each: object = ", object);
+      console.log("for each: obj = ", obj);
+
+      // Check if object already exists in context; if not, add it
+      if (!this.context[key]) {
+        this.context[key] = {};
+      }
+
+      if (obj.id) {
+        // If the object has an ID, use it to reference the object directly
+        this.idToRefMap[obj.id] = obj;
+        this.context[key][obj.id] = obj; // Store object by ID in context
+      } else {
+        throw Error("Object must have an ID");
+      }
+
+      //this.updateWorkingMemory(key, obj);
+      this.addToWorkingMemory(object);
+
+      this.context[key] = JSON.parse(JSON.stringify(object[key])); // Deep copy
+
+      // Parse and add dependencies if any
+>>>>>>> 29cb4e2 (new)
       Object.keys(object[key]).forEach((propertyKey) => {
         const propertyValue = object[key][propertyKey];
         const dependentPaths = this.parser.parseDependentPaths(propertyValue);
@@ -32,13 +69,28 @@ export class ContextManager {
     this.reEvaluateDependencies();
   }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 29cb4e2 (new)
   setValue(path, value) {
     //console.log(`- Setting value for ${path} to`, value);
     this.updateWorkingMemory(path, value);
     //console.log(`- setValue: Updated '${path}' to '${value}'. Notifying dependencies...`);
     this.dependencyTracker.notifyChange(path, value);
   }
+<<<<<<< HEAD
+=======
+  addToWorkingMemory(object) {
+    console.log(object);
+    if (object && object.id) {
+        this.workingMemory[object.id] = object;
+    } else {
+        console.error("Object must have an 'id' property");
+    }
+}
+
+>>>>>>> 29cb4e2 (new)
 
   updateWorkingMemory(path, value) {
     //console.log(`START: updateWorkingMemory: '${path}' with value '${value}'`);
@@ -60,6 +112,20 @@ export class ContextManager {
     //console.log(`updateWorkingMemory: Updated '${path}' with value: ${JSON.stringify(value)}`);
   }
 
+<<<<<<< HEAD
+=======
+  getObjectById(id) {
+    const reference = this.idToRefMap[id];
+    if (reference) {
+        return this.workingMemory[reference.id] || this.context[reference.id];
+    } else {
+        console.error(`No object found with ID '${id}'.`);
+        return null;
+    }
+}
+
+
+>>>>>>> 29cb4e2 (new)
   getValue(path) {
     //console.error(`START getValue() for '${path}'`);
     //console.log(`workingMemory=`, this.workingMemory);
@@ -111,7 +177,10 @@ export class ContextManager {
     //console.log("END WM = ", JSON.stringify(this.workingMemory, null, 2));
   }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 29cb4e2 (new)
   reEvaluateDependencies() {
     let namesOfObjectsInWM = Object.keys(this.workingMemory);
     namesOfObjectsInWM.forEach((key) => {

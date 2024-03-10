@@ -11,7 +11,11 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
+<<<<<<< HEAD
             "program": "${workspaceFolder}/Test.js"
+=======
+            "program": "${workspaceFolder}/Debug.js"
+>>>>>>> 29cb4e2 (new)
         }
     ]
 }

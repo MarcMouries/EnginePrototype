@@ -5,10 +5,16 @@ export class Rule {
     this.action = action;
   }
 
-  evaluate(context) {
-    if (this.condition(context)) {
-      this.action(context);
-    }
+  evaluate(ruleEngine) {
+   // console.log("Evaluate: ", this);
+
+    Object.values(ruleEngine.facts).forEach((fact) => {
+      if (this.condition(fact)) {
+        //console.log("Condition met for: ", this);
+        this.action(fact);
+          ruleEngine.logExplanation(this, fact);
+      }
+    });
   }
 }
 
@@ -17,6 +23,7 @@ export class RuleEngine {
     this.facts = {};
     this.rules = [];
     this.factChanges = {}; // Track the last update times
+    this.explanations = [];
   }
 
   addFact(object) {
@@ -25,7 +32,7 @@ export class RuleEngine {
     this.evaluateRules();
   }
   addRule(rule) {
-    this.rules.push(rule);
+    this.rules.push(new Rule(rule.name, rule.condition, rule.action));
   }
 
   createFactProxy(object) {
@@ -37,10 +44,10 @@ export class RuleEngine {
 
         // Only trigger evaluation if the new value is different from the current value
         if (obj[prop] !== value) {
-         // console.log(`RuleEngine: Fact ${obj.id} property ${prop} changed\n\tprevious value = ${obj[prop]}\n\tnew value = ${value}`);
-         // console.log(`RuleEngine: factChanges = `, this.factChanges);
-         // console.log(`RuleEngine: facts = `, this.facts);
-          
+          // console.log(`RuleEngine: Fact ${obj.id} property ${prop} changed\n\tprevious value = ${obj[prop]}\n\tnew value = ${value}`);
+          // console.log(`RuleEngine: factChanges = `, this.factChanges);
+          // console.log(`RuleEngine: facts = `, this.facts);
+
           // Only proceed if this is a new or updated change
           if (!ruleEngine.factChanges[changeKey]) {
             obj[prop] = value;
@@ -49,7 +56,7 @@ export class RuleEngine {
             // Mark the fact and property as changed with the current timestamp
             ruleEngine.factChanges[`${obj.id}_${prop}`] = Date.now();
             console.log(`RuleEngine: factChanges = `, this.factChanges);
-        //    ruleEngine.evaluateRules();
+            //    ruleEngine.evaluateRules();
           }
         }
         return true; // Always return true
@@ -68,19 +75,40 @@ export class RuleEngine {
   }
 
   evaluateRules() {
+    // Reset explanations at the start of each evaluation cycle
+    this.explanations = [];
+
+    // fire all rules
     this.rules.forEach((rule) => {
-
-      Object.values(this.facts).forEach((fact) => {
-
-        const isConditionMet = rule.condition(fact);
-      
-        if (isConditionMet) {
-          //console.error(`Rule Engine.evaluateRules() - rule ${rule.name} evaluated to true.\n\t Fact =  ${fact.constructor.name}\n` , rule, fact);
-          rule.action(fact);
-        }
-      });
+      rule.evaluate(this);
     });
+
     // Reset change flags after evaluation
     this.factChanges = {};
+  }
+  logExplanation(rule, fact) {
+    const explanation = {
+      rule: rule.name,
+      fact: fact.id,
+      reason: `Rule "${rule.name}" applied based on condition.`
+    };
+    this.explanations.push(explanation);
+  }
+
+  explain(factId) {
+    const fact = this.facts[factId];
+    if (!fact) {
+      return `No fact found for ID: ${factId}`;
+    }
+    const explanations = [];
+    let currentJustification = fact.justification;
+    while (currentJustification) {
+      explanations.push(`${currentJustification.reason} This led to the current state due to rule "${currentJustification.rule}".`);
+      currentJustification = this.facts[currentJustification.dependencies.shift()].justification;
+    }
+    return explanations.join("\n");
+  }
+  getExplanations() {
+    return this.explanations;
   }
 }

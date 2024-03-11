@@ -60,9 +60,6 @@ const ruleSet = [
     name: "TemperatureFluctuationAlert",
     condition: (fact) => fact.id === "message" && (fact.status.includes("hot") || fact.status.includes("freezing")),
     action: (fact) => {
-      // This rule aims to check if there was a rapid change in temperature conditions.
-      // However, given the current design of the RuleEngine, it might not effectively handle or recognize
-      // the sequence of temperature changes if they happen within a single evaluation cycle.
       console.log(`🚨 => Rule: TemperatureFluctuationAlert: Detected rapid temperature change in messages: "${fact.status}"`);
     }
   }
